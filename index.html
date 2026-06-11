@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Froggy – Expenses</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231a1d27'/><text y='85' x='10' font-size='76'>🐸</text></svg>" />
+  <link rel="apple-touch-icon" id="apple-touch-icon" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Froggy" />
+  <meta name="theme-color" content="#0f1117" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3347;
+      --accent: #6c63ff;
+      --accent2: #a78bfa;
+      --green: #34d399;
+      --red: #f87171;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --radius: 16px;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100dvh;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 20px 20px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .logo { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+    .logo span { color: var(--accent2); }
+
+    .month-nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .month-nav button {
+      background: none; border: none; color: var(--muted);
+      font-size: 18px; cursor: pointer; padding: 2px 6px;
+      border-radius: 8px; transition: color .15s;
+    }
+    .month-nav button:active { color: var(--text); }
+    #month-label { color: var(--text); min-width: 100px; text-align: center; }
+
+    /* ── Summary card ── */
+    .summary {
+      margin: 0 16px 16px;
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 20px;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .summary-label { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 6px; }
+    .summary-amount { font-size: 40px; font-weight: 800; letter-spacing: -1.5px; color: var(--text); }
+    .summary-count { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+    /* ── Quick-add ── */
+    .quick-add {
+      margin: 0 16px 16px;
+      flex-shrink: 0;
+    }
+    .amount-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .amount-input-wrap {
+      position: relative;
+      flex: 1;
+    }
+    #amount-input {
+      width: 100%;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+      -webkit-appearance: none;
+    }
+    #amount-input:focus { border-color: var(--accent); }
+    #amount-input::placeholder { color: var(--border); }
+
+    #desc-input {
+      width: 100%;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+      margin-bottom: 10px;
+    }
+    #desc-input:focus { border-color: var(--accent); }
+    #desc-input::placeholder { color: var(--muted); }
+
+    /* Suggestions */
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+      min-height: 0;
+    }
+    .suggestion-chip {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .suggestion-chip:active { background: var(--accent); border-color: var(--accent); }
+
+    #add-btn {
+      width: 100%;
+      background: var(--accent);
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+      letter-spacing: .02em;
+    }
+    #add-btn:active { opacity: .85; transform: scale(.98); }
+    #add-btn:disabled { opacity: .35; cursor: default; }
+
+    /* ── History ── */
+    .history-header {
+      padding: 4px 20px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+    .history-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 16px 32px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .history-list::-webkit-scrollbar { display: none; }
+
+    .day-group { margin-bottom: 12px; }
+    .day-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      padding: 0 4px 6px;
+    }
+
+    .expense-item {
+      display: flex;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    .expense-item.swipe-delete { transition: transform .25s ease, opacity .2s; }
+    .expense-emoji {
+      font-size: 22px;
+      flex-shrink: 0;
+      width: 36px;
+      text-align: center;
+    }
+    .expense-info { flex: 1; min-width: 0; }
+    .expense-desc {
+      font-size: 15px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .expense-time { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .expense-amount {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text);
+      flex-shrink: 0;
+    }
+    .expense-delete {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px 0 4px 8px;
+      flex-shrink: 0;
+      opacity: .6;
+      transition: opacity .15s, color .15s;
+    }
+    .expense-delete:active { opacity: 1; color: var(--red); }
+
+    .empty-state {
+      text-align: center;
+      color: var(--muted);
+      padding: 48px 16px;
+      font-size: 15px;
+    }
+    .empty-state .big { font-size: 48px; margin-bottom: 12px; }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--green);
+      color: #0f1117;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 10px 22px;
+      border-radius: 100px;
+      transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+      pointer-events: none;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">frog<span>gy</span></div>
+  <div class="month-nav">
+    <button id="prev-month" aria-label="Previous month">‹</button>
+    <span id="month-label"></span>
+    <button id="next-month" aria-label="Next month">›</button>
+  </div>
+</header>
+
+<div class="summary">
+  <div class="summary-label">Total spent this month</div>
+  <div class="summary-amount"><span id="total-amount">0</span></div>
+  <div class="summary-count" id="total-count">0 expenses</div>
+</div>
+
+<div class="quick-add">
+  <div class="amount-row">
+    <div class="amount-input-wrap">
+      <input id="amount-input" type="number" inputmode="decimal" placeholder="0" step="0.01" min="0" autocomplete="off" />
+    </div>
+  </div>
+  <input id="desc-input" type="text" placeholder="Description (coffee, rent, groceries…)" maxlength="40" autocomplete="off" autocorrect="off" autocapitalize="words" />
+  <div class="suggestions" id="suggestions"></div>
+  <button id="add-btn" disabled>Add Expense</button>
+</div>
+
+<div class="history-header">History</div>
+<div class="history-list" id="history-list"></div>
+
+<div id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'froggy_expenses';
+const SUGGESTIONS_KEY = 'froggy_suggestions';
+
+// ── State ──
+let expenses = [];
+let viewYear, viewMonth; // 0-indexed month
+
+function today() {
+  const d = new Date();
+  return { year: d.getFullYear(), month: d.getMonth() };
+}
+
+function initView() {
+  const t = today();
+  viewYear = t.year;
+  viewMonth = t.month;
+}
+
+// ── Persistence ──
+function load() {
+  try { expenses = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { expenses = []; }
+}
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
+}
+
+function loadSuggestions() {
+  try { return JSON.parse(localStorage.getItem(SUGGESTIONS_KEY)) || []; } catch { return []; }
+}
+function saveSuggestion(desc) {
+  if (!desc) return;
+  let list = loadSuggestions();
+  list = [desc, ...list.filter(s => s.toLowerCase() !== desc.toLowerCase())].slice(0, 12);
+  localStorage.setItem(SUGGESTIONS_KEY, JSON.stringify(list));
+}
+
+// ── Formatting ──
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const SHORT_MONTH = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function fmtAmount(n) {
+  return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtTime(isoStr) {
+  const d = new Date(isoStr);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function dayLabel(isoStr) {
+  const d = new Date(isoStr);
+  const now = new Date();
+  const diff = Math.floor((now - d) / 86400000);
+  const dDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const nDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dayDiff = Math.round((nDate - dDate) / 86400000);
+  if (dayDiff === 0) return 'Today';
+  if (dayDiff === 1) return 'Yesterday';
+  return `${d.getDate()} ${SHORT_MONTH[d.getMonth()]}`;
+}
+
+function emojiFor(desc) {
+  const d = (desc || '').toLowerCase();
+  const map = [
+    [/coffee|latte|espresso|cappuccino/, '☕'],
+    [/tea/, '🍵'],
+    [/food|lunch|dinner|breakfast|meal|eat|restaurant|snack|fries|burger|pizza|sushi|taco|sandwich/, '🍔'],
+    [/groceries|grocery|supermarket|market/, '🛒'],
+    [/uber|lyft|taxi|cab|ride/, '🚕'],
+    [/gas|petrol|fuel/, '⛽'],
+    [/car|parking|park/, '🚗'],
+    [/bus|metro|subway|transit|train/, '🚌'],
+    [/flight|plane|airline|airport/, '✈️'],
+    [/hotel|airbnb|lodging/, '🏨'],
+    [/book|kindle|course|class|learn/, '📚'],
+    [/movie|cinema|netflix|film/, '🎬'],
+    [/game|gaming|playstation|xbox|steam/, '🎮'],
+    [/music|spotify|concert/, '🎵'],
+    [/gym|fitness|sport|yoga/, '💪'],
+    [/doctor|medical|pharmacy|health|dentist/, '💊'],
+    [/clothes|clothing|shirt|shoes|jacket/, '👕'],
+    [/haircut|salon|barber/, '✂️'],
+    [/rent|mortgage|housing/, '🏠'],
+    [/electricity|water|gas|internet|phone|utility/, '💡'],
+    [/salary|income|pay/, '💰'],
+    [/amazon|shopping|order/, '📦'],
+    [/gift|present/, '🎁'],
+    [/bar|beer|wine|drink|alcohol/, '🍺'],
+    [/ice cream|icecream/, '🍦'],
+    [/cake|dessert|chocolate/, '🍰'],
+  ];
+  for (const [re, emoji] of map) {
+    if (re.test(d)) return emoji;
+  }
+  return '💸';
+}
+
+// ── Render ──
+function render() {
+  renderMonthLabel();
+  renderSummary();
+  renderHistory();
+}
+
+function renderMonthLabel() {
+  document.getElementById('month-label').textContent = `${MONTH_NAMES[viewMonth].slice(0,3)} ${viewYear}`;
+  const t = today();
+  document.getElementById('next-month').disabled = (viewYear === t.year && viewMonth === t.month);
+}
+
+function monthExpenses() {
+  return expenses.filter(e => {
+    const d = new Date(e.date);
+    return d.getFullYear() === viewYear && d.getMonth() === viewMonth;
+  });
+}
+
+function renderSummary() {
+  const list = monthExpenses();
+  const total = list.reduce((s, e) => s + parseFloat(e.amount), 0);
+  document.getElementById('total-amount').textContent = fmtAmount(total);
+  const n = list.length;
+  document.getElementById('total-count').textContent = `${n} expense${n !== 1 ? 's' : ''}`;
+}
+
+function renderHistory() {
+  const list = monthExpenses().slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+  const container = document.getElementById('history-list');
+
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state"><div class="big">🐸</div>No expenses yet.<br>Add your first one above!</div>`;
+    return;
+  }
+
+  // Group by day
+  const groups = {};
+  for (const e of list) {
+    const label = dayLabel(e.date);
+    if (!groups[label]) groups[label] = [];
+    groups[label].push(e);
+  }
+
+  container.innerHTML = Object.entries(groups).map(([label, items]) => `
+    <div class="day-group">
+      <div class="day-label">${label}</div>
+      ${items.map(e => `
+        <div class="expense-item" data-id="${e.id}">
+          <div class="expense-emoji">${emojiFor(e.desc)}</div>
+          <div class="expense-info">
+            <div class="expense-desc">${escHtml(e.desc || 'Expense')}</div>
+            <div class="expense-time">${fmtTime(e.date)}</div>
+          </div>
+          <div class="expense-amount">${fmtAmount(e.amount)}</div>
+          <button class="expense-delete" data-id="${e.id}" aria-label="Delete">×</button>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Suggestions ──
+function renderSuggestions(query) {
+  const all = loadSuggestions();
+  const filtered = query
+    ? all.filter(s => s.toLowerCase().includes(query.toLowerCase()))
+    : all;
+  const container = document.getElementById('suggestions');
+  container.innerHTML = filtered.slice(0, 8).map(s =>
+    `<button class="suggestion-chip" data-val="${escHtml(s)}">${escHtml(s)}</button>`
+  ).join('');
+}
+
+// ── Add expense ──
+function addExpense() {
+  const amountRaw = document.getElementById('amount-input').value.trim();
+  const desc = document.getElementById('desc-input').value.trim();
+  const amount = parseFloat(amountRaw);
+  if (!amount || amount <= 0) return;
+
+  const expense = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+    amount: amount.toFixed(2),
+    desc: desc || '',
+    date: new Date().toISOString(),
+  };
+
+  expenses.push(expense);
+  save();
+  saveSuggestion(desc);
+
+  // Reset to current month view
+  const t = today();
+  viewYear = t.year;
+  viewMonth = t.month;
+
+  document.getElementById('amount-input').value = '';
+  document.getElementById('desc-input').value = '';
+  renderSuggestions('');
+  updateAddBtn();
+  render();
+  showToast(`Added ${fmtAmount(amount)}`);
+  document.getElementById('amount-input').focus();
+}
+
+function deleteExpense(id) {
+  expenses = expenses.filter(e => e.id !== id);
+  save();
+  render();
+}
+
+function updateAddBtn() {
+  const val = parseFloat(document.getElementById('amount-input').value);
+  document.getElementById('add-btn').disabled = !(val > 0);
+}
+
+// ── Toast ──
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+// ── Month navigation ──
+function changeMonth(delta) {
+  viewMonth += delta;
+  if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+  if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+  render();
+}
+
+// ── Events ──
+document.getElementById('amount-input').addEventListener('input', updateAddBtn);
+
+document.getElementById('amount-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('desc-input').focus();
+});
+
+document.getElementById('desc-input').addEventListener('input', e => {
+  renderSuggestions(e.target.value);
+});
+
+document.getElementById('desc-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addExpense();
+});
+
+document.getElementById('add-btn').addEventListener('click', addExpense);
+
+document.getElementById('prev-month').addEventListener('click', () => changeMonth(-1));
+document.getElementById('next-month').addEventListener('click', () => changeMonth(1));
+
+document.getElementById('suggestions').addEventListener('click', e => {
+  const chip = e.target.closest('.suggestion-chip');
+  if (chip) {
+    document.getElementById('desc-input').value = chip.dataset.val;
+    renderSuggestions('');
+  }
+});
+
+document.getElementById('history-list').addEventListener('click', e => {
+  const btn = e.target.closest('.expense-delete');
+  if (btn) {
+    const item = btn.closest('.expense-item');
+    item.style.transition = 'opacity .2s, transform .2s';
+    item.style.opacity = '0';
+    item.style.transform = 'translateX(40px)';
+    setTimeout(() => deleteExpense(btn.dataset.id), 200);
+  }
+});
+
+// ── Apple touch icon (canvas-generated) ──
+(function() {
+  const size = 180;
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+  const r = 40;
+  ctx.beginPath();
+  ctx.moveTo(r, 0);
+  ctx.lineTo(size - r, 0);
+  ctx.quadraticCurveTo(size, 0, size, r);
+  ctx.lineTo(size, size - r);
+  ctx.quadraticCurveTo(size, size, size - r, size);
+  ctx.lineTo(r, size);
+  ctx.quadraticCurveTo(0, size, 0, size - r);
+  ctx.lineTo(0, r);
+  ctx.quadraticCurveTo(0, 0, r, 0);
+  ctx.closePath();
+  ctx.fillStyle = '#1a1d27';
+  ctx.fill();
+  ctx.font = '120px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🐸', size / 2, size / 2 + 6);
+  document.getElementById('apple-touch-icon').href = c.toDataURL('image/png');
+})();
+
+// ── Init ──
+load();
+initView();
+renderSuggestions('');
+updateAddBtn();
+render();
+</script>
+</body>
+</html>
