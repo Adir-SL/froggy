@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" />
   <link rel="apple-touch-icon" id="apple-touch-icon" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Froggo" />
   <meta name="theme-color" content="#0f1116" />
   <style>
@@ -47,7 +48,7 @@
 
     /* ── Header ── */
     header {
-      padding: 20px 20px 0;
+      padding: calc(env(safe-area-inset-top) + 20px) 20px 0;
       flex-shrink: 0;
     }
 
